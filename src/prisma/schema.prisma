@@ -1,0 +1,208 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Productos {
+  IdProducto    Int              @id @default(autoincrement())
+  Nombre        String           @db.VarChar(255)
+  Descripcion   String?          @db.Text
+  Stock         Int              @default(0)
+  Precio        Float            @db.Decimal(10, 2)
+  Estado        Boolean          @default(true)
+  IdCategoria   Int
+  Color         String?          @db.VarChar(100)
+  url           String?          @db.VarChar(500)
+  IdTallas      Int
+
+  // Relaciones
+  Categoria     Categorias       @relation(fields: [IdCategoria], references: [IdCategoria])
+  Talla         Tallas           @relation(fields: [IdTallas], references: [IdTalla])
+  DetalleCompras DetalleCompras[]
+  DetalleVentas  DetalleVentas[]
+  Devoluciones   Devoluciones[]
+
+  @@map("Productos")
+}
+
+model Proveedores {
+  IdProveedor    Int       @id @default(autoincrement())
+  Nombre         String    @db.VarChar(255)
+  TipoDocumento  String?   @db.VarChar(50)
+  NumeroDocumento String?  @db.VarChar(50) @unique
+  Telefono       String?   @db.VarChar(20)
+  Direccion      String?   @db.Text
+  Correo         String?   @db.VarChar(100)
+  Estado         Boolean   @default(true)
+
+  Compras        Compras[]
+
+  @@map("Proveedores")
+}
+
+model Categorias {
+  IdCategoria Int         @id @default(autoincrement())
+  Nombre      String      @db.VarChar(255)
+  Estado      Boolean     @default(true)
+
+  Productos   Productos[]
+
+  @@map("Categorias")
+}
+
+model Compras {
+  IdCompra     Int              @id @default(autoincrement())
+  IdProveedor  Int
+  Fecha        DateTime         @default(now()) @db.Timestamp
+  Total        Float            @db.Decimal(10, 2) @default(0)
+  Estado       Boolean          @default(true)
+
+  Proveedor    Proveedores      @relation(fields: [IdProveedor], references: [IdProveedor])
+  DetalleCompras DetalleCompras[]
+
+  @@map("Compras")
+}
+
+model DetalleCompras {
+  IdDetalleCompra Int       @id @default(autoincrement())
+  IdCompra        Int
+  IdProducto      Int
+  Cantidad        Int
+  Precio          Float     @db.Decimal(10, 2)
+  Subtotal        Float     @db.Decimal(10, 2)
+
+  Compra          Compras   @relation(fields: [IdCompra], references: [IdCompra], onDelete: Cascade)
+  Producto        Productos @relation(fields: [IdProducto], references: [IdProducto], onDelete: Cascade)
+
+  @@map("DetalleCompras")
+}
+
+model Devoluciones {
+  IdDevolucion Int      @id @default(autoincrement())
+  IdProducto   Int
+  IdVenta      Int
+  Cantidad     Int
+  Motivo       String?  @db.Text
+  Fecha        DateTime @default(now()) @db.Timestamp
+  Monto        Float    @db.Decimal(10, 2)
+
+  Producto     Productos @relation(fields: [IdProducto], references: [IdProducto], onDelete: Cascade)
+  Venta        Ventas    @relation(fields: [IdVenta], references: [IdVenta], onDelete: Cascade)
+
+  @@map("Devoluciones")
+}
+
+model Clientes {
+  IdCliente    Int      @id @default(autoincrement())
+  Nombre       String   @db.VarChar(255)
+  Telefono     String?  @db.VarChar(20)
+  Correo       String?  @db.VarChar(100)
+  Estado       Boolean  @default(true)
+  Departamento String?  @db.VarChar(100)
+  Ciudad       String?  @db.VarChar(100)
+  Direccion    String?  @db.Text
+  SaldoaFavor  String?  @db.VarChar(50) @default("0")
+
+  Ventas       Ventas[]
+
+  @@map("Clientes")
+}
+
+model Ventas {
+  IdVenta   Int              @id @default(autoincrement())
+  IdCliente Int
+  IdEstado  Int
+  Fecha     DateTime         @default(now()) @db.Timestamp
+  Total     Float            @db.Decimal(10, 2) @default(0)
+
+  Cliente   Clientes         @relation(fields: [IdCliente], references: [IdCliente])
+  Estado    Estado           @relation(fields: [IdEstado], references: [IdEstado])
+  DetalleVentas DetalleVentas[]
+  Devoluciones  Devoluciones[]
+
+  @@map("Ventas")
+}
+
+model DetalleVentas {
+  IdDetalleVenta Int       @id @default(autoincrement())
+  IdVenta        Int
+  IdProducto     Int
+  Cantidad       Int
+  Precio         Float     @db.Decimal(10, 2)
+  Subtotal       Float     @db.Decimal(10, 2)
+
+  Venta          Ventas    @relation(fields: [IdVenta], references: [IdVenta], onDelete: Cascade)
+  Producto       Productos @relation(fields: [IdProducto], references: [IdProducto], onDelete: Cascade)
+
+  @@map("DetalleVentas")
+}
+
+model Usuarios {
+  IdUsuario Int    @id @default(autoincrement())
+  Nombre    String @db.VarChar(255)
+  Correo    String @db.VarChar(100) @unique
+  Clave     String @db.VarChar(255)
+  Estado    Boolean @default(true)
+  IdRol     Int
+
+  Rol       Roles  @relation(fields: [IdRol], references: [IdRol])
+
+  @@map("Usuarios")
+}
+
+model Roles {
+  IdRol  Int         @id @default(autoincrement())
+  Nombre String      @db.VarChar(255)
+  Estado Boolean     @default(true)
+
+  Usuarios Usuarios[]
+  DetallePermisos DetallePermisos[]
+
+  @@map("Roles")
+}
+
+model Permisos {
+  IdPermiso String            @id @db.VarChar(50)
+  Nombre    String            @db.Text
+
+  DetallePermisos DetallePermisos[]
+
+  @@map("Permisos")
+}
+
+model DetallePermisos {
+  IdDetalle Int    @id @default(autoincrement())
+  IdRol     Int
+  IdPermiso String @db.VarChar(50)
+
+  Rol       Roles   @relation(fields: [IdRol], references: [IdRol], onDelete: Cascade)
+  Permiso   Permisos @relation(fields: [IdPermiso], references: [IdPermiso], onDelete: Cascade)
+
+  @@unique([IdRol, IdPermiso])
+
+  @@map("DetallePermisos")
+}
+
+model Estado {
+  IdEstado Int      @id @default(autoincrement())
+  Nombre   String   @db.VarChar(255)
+  Estado   Boolean  @default(true)
+
+  Ventas   Ventas[]
+
+  @@map("Estado")
+}
+
+model Tallas {
+  IdTalla Int         @id @default(autoincrement())
+  Nombre  String      @db.VarChar(50)
+
+  Productos Productos[]
+
+  @@map("Tallas")
+}
