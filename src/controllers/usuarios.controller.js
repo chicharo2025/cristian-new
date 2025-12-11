@@ -29,8 +29,8 @@ const usuariosController = {
   // Crear un usuario
   create: async (req, res) => {
     try {
-      const { Nombre, Correo, Clave, RolId } = req.body;
-      if (!Nombre || !Correo || !Clave || !RolId) {
+      const { Nombre, Correo, Clave, IdRol } = req.body;
+      if (!Nombre || !Correo || !Clave || !IdRol) {
         return res.status(400).json({ success: false, message: 'Faltan datos obligatorios' });
       }
 

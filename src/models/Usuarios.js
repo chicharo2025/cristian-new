@@ -19,18 +19,21 @@ const Usuarios = {
     });
   },
 
-  create: async (usuarioData) => {
-    const hashedPassword = await bcrypt.hash(usuarioData.Clave, 10);
+create: async (usuarioData) => {
+  const hashedPassword = await bcrypt.hash(usuarioData.Clave, 10);
 
-    return await prisma.usuarios.create({
-      data: {
-        ...usuarioData,
-        Clave: hashedPassword,
-        Estado: true
-      },
-      include: { Rol: true }
-    });
-  },
+  return await prisma.usuarios.create({
+    data: {
+      Nombre: usuarioData.Nombre,
+      Correo: usuarioData.Correo,
+      Clave: hashedPassword,
+      Estado: true,
+      IdRol: usuarioData.IdRol
+    },
+    include: { Rol: true }
+  });
+},
+
 
   update: async (id, usuarioData) => {
     const idInt = parseInt(id, 10);
