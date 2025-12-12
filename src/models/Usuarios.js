@@ -19,21 +19,20 @@ const Usuarios = {
     });
   },
 
-create: async (usuarioData) => {
-  const hashedPassword = await bcrypt.hash(usuarioData.Clave, 10);
+  create: async (usuarioData) => {
+    const hashedPassword = await bcrypt.hash(usuarioData.Clave, 10);
 
-  return await prisma.usuarios.create({
-    data: {
-      Nombre: usuarioData.Nombre,
-      Correo: usuarioData.Correo,
-      Clave: hashedPassword,
-      Estado: true,
-      IdRol: usuarioData.IdRol
-    },
-    include: { Rol: true }
-  });
-},
-
+    return await prisma.usuarios.create({
+      data: {
+        Nombre: usuarioData.Nombre,
+        Correo: usuarioData.Correo,
+        Clave: hashedPassword,
+        Estado: true,
+        IdRol: usuarioData.IdRol
+      },
+      include: { Rol: true }
+    });
+  },
 
   update: async (id, usuarioData) => {
     const idInt = parseInt(id, 10);
@@ -50,14 +49,24 @@ create: async (usuarioData) => {
     });
   },
 
+  // 🔥 ELIMINACIÓN REAL — YA NO SOLO CAMBIA ESTADO
   delete: async (id) => {
     const idInt = parseInt(id, 10);
     if (isNaN(idInt)) return null;
 
-    return await prisma.usuarios.update({
-      where: { IdUsuario: idInt },
-      data: { Estado: false }
+    // Verificar si existe
+    const usuario = await prisma.usuarios.findUnique({
+      where: { IdUsuario: idInt }
     });
+
+    if (!usuario) return null;
+
+    // Eliminar definitivamente
+    await prisma.usuarios.delete({
+      where: { IdUsuario: idInt }
+    });
+
+    return true;
   },
 
   login: async (Correo, Clave) => {
